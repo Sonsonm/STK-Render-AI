@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * Atualiza a sessão do Supabase a cada requisição (necessário para SSR auth)
  * e protege rotas autenticadas, redirecionando para /login quando necessário.
  */
-export async function updateSession(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
