@@ -64,6 +64,7 @@ export async function createProject(
     .single();
 
   if (projectError || !project) {
+    console.error("Erro ao criar projeto:", JSON.stringify(projectError));
     return { error: "Nao foi possivel criar o projeto. Tente novamente." };
   }
 
