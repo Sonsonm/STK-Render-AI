@@ -14,7 +14,7 @@ import { ClaudeSonnetAdapter } from "./claude-sonnet";
 
 export type PipelineStage =
   | "technical_analysis"
-  | "quality_control"
+  | "technical_analysis" | "quality_control"
   | "render"
   | "upscale";
 
