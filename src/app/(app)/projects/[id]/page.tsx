@@ -179,6 +179,15 @@ export default function ProjectDetailPage() {
     loadAll();
   }, [loadAll]);
 
+  // Auto-trigger: dispara analise quando projeto esta em "uploaded"
+  const analyzeTriggered = useRef(false);
+  useEffect(() => {
+    if (project?.status === "uploaded" && !analyzeTriggered.current) {
+      analyzeTriggered.current = true;
+      fetch(`/api/projects/${projectId}/analyze`, { method: "POST" });
+    }
+  }, [project?.status, projectId]);
+
   // Polling para estados em transicao
   useEffect(() => {
     if (!project) return;
