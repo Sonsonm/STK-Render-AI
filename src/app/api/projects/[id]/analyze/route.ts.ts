@@ -4,18 +4,16 @@
  * Dispara o pipeline de análise técnica para um projeto.
  * Protegido: apenas o dono do projeto pode disparar.
  *
- * Execução em background via `after()` do Next.js: a requisição retorna
- * imediatamente e o pipeline continua rodando após a resposta. A Vercel
- * mantém a função viva até o pipeline terminar (limitado por maxDuration).
- * O cliente faz polling no status do projeto para saber quando termina.
+ * O pipeline roda de forma síncrona (await). O front dispara este
+ * fetch sem await, então a UI não bloqueia. maxDuration garante
+ * que a Vercel mantém a função viva até o pipeline terminar.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
-import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { runAnalysisPipeline } from "@/lib/pipeline/analysis-pipeline";
 
-// Mantém a função viva por até 60s para o pipeline rodar em background.
+// Mantém a função viva por até 60s para o pipeline completar.
 export const maxDuration = 60;
 
 export async function POST(
@@ -52,19 +50,20 @@ export async function POST(
     );
   }
 
-  // Roda o pipeline APÓS a resposta ser enviada. A Vercel mantém a função
-  // viva até a promise terminar (diferente de `void`, que era morto no return).
-  after(async () => {
-    try {
-      await runAnalysisPipeline(projectId);
-    } catch (err) {
-      console.error(`[analyze] Falha no pipeline do projeto ${projectId}:`, err);
-    }
-  });
-
-  return NextResponse.json({
-    ok: true,
-    message: "Analise iniciada.",
-    projectId,
-  });
+  // Roda o pipeline diretamente (await). O front chama sem await,
+  // entao a UI nao bloqueia. O polling detecta mudancas de status.
+  try {
+    await runAnalysisPipeline(projectId);
+    return NextResponse.json({
+      ok: true,
+      message: "Analise concluida.",
+      projectId,
+    });
+  } catch (err) {
+    console.error(`[analyze] Falha no pipeline do projeto ${projectId}:`, err);
+    return NextResponse.json(
+      { ok: false, error: "Falha no pipeline de analise." },
+      { status: 500 }
+    );
+  }
 }
